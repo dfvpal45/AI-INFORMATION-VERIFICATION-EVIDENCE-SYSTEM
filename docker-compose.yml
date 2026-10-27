@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: aivs
+      POSTGRES_USER: aivs
+      POSTGRES_PASSWORD: aivs_password
+    ports: ["5432:5432"]
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aivs -d aivs"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://aivs:aivs_password@db:5432/aivs
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      GOOGLE_FACTCHECK_API_KEY: ${GOOGLE_FACTCHECK_API_KEY:-}
+      NEWSAPI_KEY: ${NEWSAPI_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ENABLE_TRANSFORMERS: ${ENABLE_TRANSFORMERS:-false}
+      ENABLE_SENTENCE_TRANSFORMERS: ${ENABLE_SENTENCE_TRANSFORMERS:-false}
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_started}
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes: ["./frontend:/app", "/app/node_modules"]
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports: ["5173:5173"]
+    depends_on: [backend]
+volumes:
+  postgres_data:

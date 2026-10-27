@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: aivs
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./aivs.db
+      - key: ENABLE_TRANSFORMERS
+        value: "false"
+      - key: ENABLE_SENTENCE_TRANSFORMERS
+        value: "false"
