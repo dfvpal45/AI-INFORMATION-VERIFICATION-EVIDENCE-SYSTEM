@@ -1,5 +1,4 @@
-AIVES: AI Information Verification & Evidence System
-
+**** AI Information Verification & Evidence System**
 An evidence-based fact-checking pipeline that takes a claim, a news URL or a screenshot, retrieves supporting evidence from multiple sources, and returns a verdict with a confidence score and a plain-language explanation with source links.
 
 Built with: Python 3.11 · FastAPI · React + Tailwind CSS · PostgreSQL · Redis · FAISS · Docker
@@ -20,7 +19,6 @@ Roadmap
 Contributing
 License
 Overview
-
 Misinformation spreads quickly through forwarded messages, social media posts and news articles. AIVES helps users check whether a claim is supported by trustworthy evidence instead of relying on a single black-box prediction.
 
 Users can submit:
@@ -28,7 +26,6 @@ Users can submit:
 a text claim,
 a news article URL, or
 an image (for example, a forwarded-message screenshot).
-
 The system extracts the check-worthy claims, searches for evidence in parallel across fact-checking databases, open knowledge sources and a locally indexed trusted corpus, ranks that evidence, and uses a Natural Language Inference (NLI) model to decide whether each claim is supported, refuted, or has not enough information. A final verdict is produced using source-credibility weights, and a language model writes a short explanation strictly from the retrieved evidence.
 
 Key Features
@@ -42,6 +39,20 @@ Honest uncertainty: low-confidence results are marked "Unverified" instead of gu
 Grounded explanations: retrieval-augmented LLM summaries that use only the retrieved evidence, to reduce hallucination.
 Feedback loop: user feedback is stored in PostgreSQL for later analysis and model improvement.
 Fast and scalable: Redis caching for repeated claims and API responses; async FastAPI pipeline.
+System Architecture
+1. User InputText claim / News URL /Image
+2. PreprocessingOCR (Tesseract), cleaning,URL scraping
+3. Claim ExtractionspaCy NER + check-worthysentence detection
+4a. Fact-check APIsGoogle Fact Check Tools
+4b. Open KnowledgeWikipedia + NewsAPI
+4c. Trusted CorpusFAISS vector index
+5. Evidence RankingSentence-BERT similarity(top-k)
+6. Claim VerificationDeBERTa NLI: support /refute / not enough info
+Source Credibility Scorer
+7. Verdict + ConfidenceAggregation with credibilityweights
+8. Explanation + ReportLLM summary with sourcelinks -> Web UI
+PostgreSQLclaims, verdicts, userfeedback
+Figure 1: Working architecture of the AI Information Verification & Evidence System.
 
 How It Works
 Step	Stage	Description
@@ -72,7 +83,6 @@ Caching / queue	Redis	Caches repeated claims and API responses to reduce latency
 ML framework	PyTorch + scikit-learn	PyTorch runs/fine-tunes the models; scikit-learn computes accuracy, precision, recall and F1-score.
 Deployment	Docker + GitHub	Docker packages the app for consistent deployment; GitHub provides version control and collaboration.
 Project Structure
-
 This is a suggested layout. Adjust it to match your repository.
 
 aives/
@@ -127,7 +137,6 @@ docker compose up --build
 Frontend: http://localhost:3000
 Backend API docs (Swagger): http://localhost:8000/docs
 3. Run locally (without Docker)
-
 Backend
 
 bash
@@ -142,7 +151,6 @@ python scripts/build_corpus_index.py
 
 # Start the API
 uvicorn app.main:app --reload --port 8000
-
 Frontend
 
 bash
@@ -150,7 +158,6 @@ cd frontend
 npm install
 npm run dev
 Configuration
-
 Create a .env file in the project root (see .env.example):
 
 env
@@ -168,12 +175,10 @@ EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 NLI_MODEL_PATH=./models/deberta-v3-nli
 TOP_K_EVIDENCE=5
 CONFIDENCE_THRESHOLD=0.60     # below this, the verdict is "Unverified"
-
 Never commit your .env file or API keys to version control.
 
 API Usage
 POST /api/verify
-
 Submit a claim, URL or image for verification.
 
 bash
@@ -186,7 +191,6 @@ curl -X POST http://localhost:8000/api/verify \
 curl -X POST http://localhost:8000/api/verify \
   -F "type=image" \
   -F "file=@screenshot.png"
-
 Example response (illustrative)
 
 json
@@ -205,17 +209,14 @@ json
     }
   ]
 }
-
 Possible verdicts: Supported, Refuted, Unverified.
 
 POST /api/feedback
-
-Save user feedback on a verdict so we can review it and use it to improve the system.
+Save user feedback on a verdict so it can be reviewed and used to improve the system.
 
 json
 { "claim_id": 123, "agrees_with_verdict": false, "comment": "Source is outdated." }
 Model Training & Evaluation
-
 The verification model is DeBERTa-v3 fine-tuned for NLI on the FEVER and MNLI datasets.
 
 bash
@@ -224,7 +225,6 @@ python backend/scripts/finetune_nli.py --epochs 3 --batch-size 16
 
 # Evaluate
 python backend/scripts/evaluate.py --model ./models/deberta-v3-nli --dataset fever_dev
-
 Metrics are computed with scikit-learn:
 
 Metric	Value
@@ -235,8 +235,8 @@ F1-score	to be filled
 Limitations
 Verdict quality depends on evidence coverage: if no relevant evidence is found, the claim is marked "Unverified".
 The trusted corpus must be kept up to date, and the credibility weights reflect design choices that may carry bias.
-OCR accuracy drops on low-resolution, stylised, or heavily compressed screenshots.
-NLI models can struggle with sarcasm, implicit claim,s and complex multi-hop reasoning.
+OCR accuracy drops on low-resolution, stylised or heavily compressed screenshots.
+NLI models can struggle with sarcasm, implicit claims and complex multi-hop reasoning.
 The default pipeline is tuned for English content.
 AIVES is a decision-support tool, not a replacement for professional fact-checkers.
 Roadmap
@@ -247,7 +247,6 @@ Roadmap
  Image manipulation / reverse-image-search checks
  Admin dashboard for managing sources and credibility scores
 Contributing
-
 Contributions are welcome.
 
 Fork the repository
@@ -256,7 +255,6 @@ Commit your changes: git commit -m "Add your feature"
 Push to the branch: git push origin feature/your-feature
 Open a Pull Request
 License
-
 This project is licensed under the MIT License. See the LICENSE file for details. (Change this if you use a different license.)
 
 Acknowledgements
@@ -265,3 +263,5 @@ FAISS by Meta AI
 FEVER and MNLI datasets
 Google Fact Check Tools, Wikipedia and NewsAPI
 Anthropic Claude API for evidence-grounded explanations
+
+Claude finished the response
